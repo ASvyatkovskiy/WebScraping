@@ -11,7 +11,8 @@ import multiprocessing
 import sys
 import csv
 
-def doPage(main_url,ipage):
+
+def doLogin():
     # Browser
     br = mechanize.Browser()
 
@@ -44,6 +45,10 @@ def doPage(main_url,ipage):
     br.form['vb_login_password'] = 'yourpasswd'
     # Login
     br.submit()
+    return br
+
+def doPage(main_url,ipage):
+    br = doLogin()
 
     page = br.open(main_url+'/index'+str(ipage)+'.html').read()
     soup = BeautifulSoup(page)
@@ -54,39 +59,8 @@ def doPage(main_url,ipage):
 #Get texts, usernames and timestamps
 #
 def doTexts(l):
-    # Browser
-    br = mechanize.Browser()
-
-    # Cookie Jar
-    cj = cookielib.LWPCookieJar()
-    br.set_cookiejar(cj)
-
-    # Browser options
-    br.set_handle_equiv(True)
-    #br.set_handle_gzip(True)
-    br.set_handle_redirect(True)
-    br.set_handle_referer(True)
-    br.set_handle_robots(False)
-    br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=1)
-
-    br.addheaders = [('User-agent', 'Chrome')]
-
-    # The site we will navigate into, handling it's session
-    br.open('http://www.mothering.com/forum/login.php?do=login')
-
-    # View available forms
-    #for f in br.forms():
-    #    print f
-
-    # Select the second (index one) form (the first form is a search query box)
-    br.select_form(nr=1)
-
-    # User credentials
-    br.form['vb_login_username'] = 'yourusername'
-    br.form['vb_login_password'] = 'yourpasswd'
-    # Login
-    br.submit()
-
+    br = doLogin()
+   
     post_lines = list()
     post = ""
     try:
