@@ -18,13 +18,12 @@ def main():
         #Find the right CSS web element using Chrome
         elem = driver.find_elements_by_css_selector('div#ReportViewer_ctl05_ctl04_ctl00_Menu > div > a')
         button_name = elem[1].get_attribute('onclick')
-        time.sleep(10)
+        time.sleep(5)
         driver.execute_script("return "+button_name)
         #Allow to finish download
-        time.sleep(30)
+        time.sleep(20)
 
-    years = [y for y in range(2000,2016)]
-    print years
+    years = [y for y in range(2000,2017)]
     map(lambda x: db_load(x),years)
 
     driver.close()
@@ -33,7 +32,7 @@ def main():
     #harvest all xlsx files in the /tmp folder
     xlsx_files = glob.glob("/tmp/*.xlsx*")
     def harvest(fname):
-        Popen("mv /tmp/"+fname+" ./"+fname.lstrip(".part"),shell=True).wait()
+        Popen("mv "+fname+" ./"+fname.lstrip("/tmp/").rstrip(".part"),shell=True).wait()
     map(lambda x: harvest(x),xlsx_files)
 
 if __name__=='__main__':
