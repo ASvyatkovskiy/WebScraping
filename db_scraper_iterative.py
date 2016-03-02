@@ -7,6 +7,14 @@ import glob
 from subprocess import Popen
 import cPickle as pickle
 
+from joblib import Parallel, delayed
+import multiprocessing
+
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import WebDriverWait
+
+
 def get_i_option(driver, name, i):
     element = driver.find_element_by_name(name)
     options = element.find_elements_by_tag_name("option")
@@ -73,69 +81,74 @@ def get_all_items(driver):
 
     return all_items
 
-def main():
-    display = Display(visible=0, size=(1024, 768))
-    display.start()
-    driver = webdriver.Firefox()
+def process_chunk(state,district,block):
+   
+    try:
+        display = Display(visible=0, size=(1024, 768))
+        display.start()
+        driver = webdriver.Firefox()
 
-    state = ''
-    district = ''
-    block = ''
-    icount = 0
-    driver.get("http://omms.nic.in/Home/")
-    time.sleep(10)
-    main_menu = driver.find_element_by_css_selector("a.menuLnk")
-    main_click = main_menu.get_attribute('onclick')
-    time.sleep(3)
-    driver.execute_script("return "+main_click)
-    time.sleep(3)
+        driver.get("http://omms.nic.in/Home/")
+        main_menu = WebDriverWait(driver,10).until(EC.presence_of_element_located((By.CSS_SELECTOR,"a.menuLnk")))
+        #main_menu = driver.find_element_by_css_selector("a.menuLnk")
+        main_click = main_menu.get_attribute('onclick')
+        time.sleep(3)
+        driver.execute_script("return "+main_click)
+        time.sleep(3)
+
+        for year in range(2000,2017):
+            #State: Rajasthan     District: Ajmer     Block: Arain     Year : 2000-2001      Batch: All Batches   
+            print "Accessing data for state: ", state, " district: ", district, " block: ", block, " year: ", year,"..."
+            year = str(year)
+            access_string =  str("http://omms.nic.in/MvcReportViewer.aspx?_r=%2fPMGSYCitizen%2fSanctionedProjects&Level=3&State=29&District=6&Block=216&Year="+year+"&Batch=0&PMGSY=1&DisplayStateName="+state+"&DisplayDistName="+district+"&DispBlockName="+block+"&LocalizationValue=en&BatchName=All+Batches")
+            time.sleep(5) 
+            #print access_string
+            driver.get(access_string)
+            #let it load
+            #time.sleep(10)
+
+            #Find the right CSS web element using Chrome
+            elem = WebDriverWait(driver,10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,"div[id$='208iT0R0x0'] > a")))
+            #elem = driver.find_elements_by_css_selector("div[id$='208iT0R0x0'] > a")
+            time.sleep(3)
+            hov = ActionChains(driver).move_to_element(elem[1])
+            hov.perform()
+            time.sleep(3)
+            elem[1].click()
+            time.sleep(5)
+
+            link = driver.find_elements_by_css_selector('div#ReportViewer_ctl05_ctl04_ctl00_Menu > div > a')
+            button_name = link[1].get_attribute('onclick')
+            time.sleep(3)
+            try:
+                driver.execute_script("return "+button_name)
+            except: print "Page is being updated"
+            #Allow to finish download
+            time.sleep(5)
+
+            #harvest(state,district,block,year)
+
+        driver.close()
+        display.stop()
+    except: 
+        print "Unknown exception" 
+        pass
+
+def main():
 
     try:
         all_items = pickle.load( open( "all_items.pickle", "rb" ) )
-    except: 
+    except:
         all_items = get_all_items(driver)
         pickle.dump(all_items, open( "all_items.pickle", "wb" ) )
 
+    num_cores = 30
     for state in all_items.keys():
+        if state == 'Goa': continue
+        if state == 'Punjab': continue
+        if state == 'Haryana': continue 
         for district in all_items[state].keys():
-            for block in all_items[state][district]:
-                for year in range(2000,2017):
-                    #State: Rajasthan     District: Ajmer     Block: Arain     Year : 2000-2001      Batch: All Batches   
-                    print "Accessing data for state: ", state, " district: ", district, " block: ", block, " year: ", year,"..."
-                    year = str(year)
-                    time.sleep(5)
-                    access_string =  str("http://omms.nic.in/MvcReportViewer.aspx?_r=%2fPMGSYCitizen%2fSanctionedProjects&Level=3&State=29&District=6&Block=216&Year="+year+"&Batch=0&PMGSY=1&DisplayStateName="+state+"&DisplayDistName="+district+"&DispBlockName="+block+"&LocalizationValue=en&BatchName=All+Batches")
-                    time.sleep(5) 
-                    #print access_string
-                    driver.get(access_string)
-                    #let it load
-                    time.sleep(20)
-
-                    #Find the right CSS web element using Chrome
-                    elem = driver.find_elements_by_css_selector("div[id$='208iT0R0x0'] > a")
-                    time.sleep(3)
-                    hov = ActionChains(driver).move_to_element(elem[1])
-                    hov.perform()
-                    time.sleep(3)
-                    elem[1].click()
-                    time.sleep(5)
-
-                    link = driver.find_elements_by_css_selector('div#ReportViewer_ctl05_ctl04_ctl00_Menu > div > a')
-                    button_name = link[1].get_attribute('onclick')
-                    time.sleep(3)
-                    try:
-                        driver.execute_script("return "+button_name)
-                    except: print "Page is being updated"
-                    #Allow to finish download
-                    time.sleep(5)
-                    icount += 1
-
-                    harvest(icount)
-
-
-    driver.close()
-    display.stop()
-
+            Parallel(n_jobs=num_cores)(delayed(process_chunk)(state,district,block) for block in all_items[state][district])
 
 if __name__=='__main__':
     main()
