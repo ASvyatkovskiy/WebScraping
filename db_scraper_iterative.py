@@ -144,9 +144,6 @@ def main():
 
     num_cores = 30
     for state in all_items.keys():
-        if state == 'Goa': continue
-        if state == 'Punjab': continue
-        if state == 'Haryana': continue 
         for district in all_items[state].keys():
             Parallel(n_jobs=num_cores)(delayed(process_chunk)(state,district,block) for block in all_items[state][district])
 
