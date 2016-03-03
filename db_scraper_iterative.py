@@ -60,7 +60,7 @@ def get_all_items(driver):
             #print "district ", district
             all_items[state][district] = list()
             district_option.click()
-            time.sleep(5)  
+            time.sleep(7)  
             block_element = driver.find_element_by_xpath("//select[@name='BlockCode']")
             block_options = block_element.find_elements_by_tag_name("option")
             block_count = len(block_options)
@@ -100,16 +100,15 @@ def process_chunk(state,district,block):
             #State: Rajasthan     District: Ajmer     Block: Arain     Year : 2000-2001      Batch: All Batches   
             print "Accessing data for state: ", state, " district: ", district, " block: ", block, " year: ", year,"..."
             year = str(year)
-            access_string =  str("http://omms.nic.in/MvcReportViewer.aspx?_r=%2fPMGSYCitizen%2fSanctionedProjects&Level=3&State=29&District=6&Block=216&Year="+year+"&Batch=0&PMGSY=1&DisplayStateName="+state+"&DisplayDistName="+district+"&DispBlockName="+block+"&LocalizationValue=en&BatchName=All+Batches")
+            access_string = str("http://omms.nic.in/MvcReportViewer.aspx?_r=%2fPMGSYCitizen%2fSanctionedProjects&Level=3&State=7&District=346&Block=373&Year="+year+"&Batch=0&PMGSY=1&DisplayStateName="+state+"&DisplayDistName="+district+"&DispBlockName="+block+"&LocalizationValue=en&BatchName=All+Batches") 
             time.sleep(5) 
             #print access_string
             driver.get(access_string)
             #let it load
-            #time.sleep(10)
+            time.sleep(10)
 
             #Find the right CSS web element using Chrome
             elem = WebDriverWait(driver,10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR,"div[id$='208iT0R0x0'] > a")))
-            #elem = driver.find_elements_by_css_selector("div[id$='208iT0R0x0'] > a")
             time.sleep(3)
             hov = ActionChains(driver).move_to_element(elem[1])
             hov.perform()
