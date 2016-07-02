@@ -71,7 +71,7 @@ def get_all_items():
 
 def main():
     all_items = get_all_items()
-    print all_items
+    #print all_items
 
     #Convert our data structre and write to CSV
     import csv
