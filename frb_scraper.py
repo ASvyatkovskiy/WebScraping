@@ -30,7 +30,7 @@ def get_all_items():
     #We count them
     option_count = len(form_options)
     #Next, we loop over all of them - essentially like we scrolling down the drop down menu and clicking on each every form 
-    for form_i in xrange(1,3): #option_count):
+    for form_i in xrange(1,option_count):
         #Get web element corresponding to a form
         form = form_options[form_i]
         #Click as a mouse click-action in browser 
